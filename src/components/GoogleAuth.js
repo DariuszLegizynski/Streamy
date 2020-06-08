@@ -1,39 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { signIn, signOut } from "../actions";
+
+const API_KEY = process.env.REACT_APP_API_KEY;
 
 const GoogleAuth = () => {
-	const [ isSignedIn, setIsSignedIn ] = useState(null);
+	const isSignedIn = useSelector((state) => state.isSignedIn);
+	const dispatch = useDispatch();
 
-	const API_KEY = process.env.REACT_APP_API_KEY;
-
-	const onAuthChange = () => {
-		setIsSignedIn(window.gapi.auth2.getAuthInstance().isSignedIn.get());
+	const onAuthChange = (isSignedIn) => {
+		if (isSignedIn) {
+			signIn();
+		} else {
+			signOut();
+		}
 	};
 
 	const onSignInOnClick = () => {
-		window.gapi.auth2.getAuthInstance().signIn();
+		dispatch(window.gapi.auth2.getAuthInstance().signIn());
 	};
 
 	const onSignOutOnClick = () => {
-		window.gapi.auth2.getAuthInstance().signOut();
+		dispatch(window.gapi.auth2.getAuthInstance().signOut());
 	};
 
-	useEffect(
-		() => {
-			window.gapi.load("client:auth2", () => {
-				window.gapi.client
-					.init({
-						clientId: API_KEY,
-						scope: "email"
-					})
-					.then(() => {
-						// const authInstance = window.gapi.auth2.getAuthInstance();
-						onAuthChange(); //refactored, but could be this in here: setIsSignedIn(window.gapi.auth2.getAuthInstance().isSignedIn.get());
-						window.gapi.auth2.getAuthInstance().isSignedIn.listen(onAuthChange);
-					});
-			});
-		},
-		[ API_KEY ]
-	);
+	useEffect(() => {
+		window.gapi.load("client:auth2", () => {
+			window.gapi.client
+				.init({
+					clientId: API_KEY,
+					scope: "email"
+				})
+				.then(() => {
+					onAuthChange();
+					window.gapi.auth2.getAuthInstance().isSignedIn.listen(onAuthChange);
+				});
+		});
+	}, []);
 
 	const renderAuthButton = () => {
 		if (isSignedIn === null) {
